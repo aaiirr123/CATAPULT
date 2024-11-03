@@ -21,8 +21,6 @@ const Boom = require("@hapi/boom"),
     { v4: uuidv4 } = require("uuid"),
     Registration = require("../lib/registration");
 
-const helpers = require("../lib/helpers");
-
 module.exports = {
     name: "catapult-player-api-routes-v1-registrations",
     register: (server, options) => {
@@ -315,36 +313,25 @@ module.exports = {
                         if (! registration) {
                             throw Boom.notFound(`registration: ${registrationId}`);
                         }
-                        
-                        let resourceEtag = undefined;
-                        let resourcePath = "agents/profile?" + new URLSearchParams({
-                            profileId: "cmi5LearnerPreferences",
-                            agent: JSON.stringify(registration.actor)
-                        });
 
-                        let originalDocumentResponse = await helpers.getDocumentFromLRS(resourcePath);
-                        if (originalDocumentResponse.exists) {
-                            resourceEtag = originalDocumentResponse.etag;
-                        }
-
-                        let headers = {
-                            "Content-Type": "application/json",
-                            ...req.headers["if-match"] ? {"If-Match": req.headers["if-match"]} : {},
-                            ...req.headers["if-none-match"] ? {"If-None-Match": req.headers["if-none-match"]} : {}
-                        };
-
-                        if (resourceEtag != undefined) {
-                            headers["If-Match"] = resourceEtag
-                        }
-
-                        let response, responseBody;
+                        let response,
+                            responseBody;
 
                         try {
                             response = await lrsWreck.request(
                                 "PUT",
-                                resourcePath,
+                                "agents/profile?" + new URLSearchParams(
+                                    {
+                                        profileId: "cmi5LearnerPreferences",
+                                        agent: JSON.stringify(registration.actor)
+                                    }
+                                ).toString(),
                                 {
-                                    headers: headers,
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        ...req.headers["if-match"] ? {"If-Match": req.headers["if-match"]} : {},
+                                        ...req.headers["if-none-match"] ? {"If-None-Match": req.headers["if-none-match"]} : {}
+                                    },
                                     payload: req.payload
                                 }
                             );
@@ -381,36 +368,23 @@ module.exports = {
                             throw Boom.notFound(`registration: ${registrationId}`);
                         }
 
-                        let resourceEtag = undefined;
-                        let resourcePath = "agents/profile?" + new URLSearchParams({
-                            profileId: "cmi5LearnerPreferences",
-                            agent: JSON.stringify(registration.actor)
-                        });
-
-                        let originalDocumentResponse = await helpers.getDocumentFromLRS(resourcePath);
-                        if (originalDocumentResponse.exists) {
-                            resourceEtag = originalDocumentResponse.etag;
-                        }
-
-                        let headers = {
-                            "Content-Type": "application/json",
-                            ...req.headers["if-match"] ? {"If-Match": req.headers["if-match"]} : {},
-                            ...req.headers["if-none-match"] ? {"If-None-Match": req.headers["if-none-match"]} : {}
-                        };
-
-                        if (resourceEtag != undefined) {
-                            headers["If-Match"] = resourceEtag
-                        }
-
-                        let response, responseBody;
+                        let response,
+                            responseBody;
 
                         try {
                             response = await lrsWreck.request(
                                 "DELETE",
-                                resourcePath,
+                                "agents/profile?" + new URLSearchParams(
+                                    {
+                                        profileId: "cmi5LearnerPreferences",
+                                        agent: JSON.stringify(registration.actor)
+                                    }
+                                ).toString(),
                                 {
-                                    headers: headers,
-                                    payload: req.payload
+                                    headers: {
+                                        ...req.headers["if-match"] ? {"If-Match": req.headers["if-match"]} : {}
+                                        // ...req.headers["if-none-match"] ? {"If-None-Match": req.headers["if-none-match"]} : {}
+                                    }
                                 }
                             );
 

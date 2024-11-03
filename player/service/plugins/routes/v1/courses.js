@@ -28,7 +28,6 @@ const uuidv4 = require("uuid").v4;
 const Helpers = require("../lib/helpers");
 const Registration = require("../lib/registration");
 const Session = require("../lib/session");
-const helpers = require("../lib/helpers");
 const readFile = util.promisify(fs.readFile);
 const copyFile = util.promisify(fs.copyFile);
 const mkdir = util.promisify(fs.mkdir);
@@ -350,7 +349,7 @@ module.exports = {
                             //
                             isZip = contentType === "application/zip" || contentType === "application/x-zip-compressed";
 
-                        let courseStructureDataRaw,
+                        let courseStructureData,
                             zip;
 
                         if (!isZip && contentType !== "text/xml") {
@@ -366,7 +365,7 @@ module.exports = {
                             }
 
                             try {
-                                courseStructureDataRaw = await zip.entryData("cmi5.xml");
+                                courseStructureData = await zip.entryData("cmi5.xml");
                             }
                             catch (ex) {
                                 if (ex.message === "Bad archive") {
@@ -378,18 +377,10 @@ module.exports = {
                         }
                         else {
                             try {
-                                courseStructureDataRaw = await readFile(req.payload.path);
+                                courseStructureData = await readFile(req.payload.path);
                             }
                             catch (ex) {
                                 throw Boom.internal(`Failed to read structure file: ${ex}`);
-                            }
-                        }
-
-                        let courseStructureData = await helpers.sanitizeXML(courseStructureDataRaw);
-                        if (courseStructureData != undefined) {
-                            let seemsOdd = await helpers.isPotentiallyMaliciousXML(courseStructureData);
-                            if (seemsOdd) {
-                                throw Boom.internal(`Invalid XML data provided: ${ex}`);
                             }
                         }
 
@@ -739,6 +730,8 @@ module.exports = {
                             moveOn = req.payload.moveOn || courseAu.metadata.moveOn || "NotApplicable",
                             alternateEntitlementKey = req.payload.alternateEntitlementKey || courseAu.metadata.alternateEntitlementKey,
                     
+                            baseUrl = `${protocol}//${req.url.host}${rootPath}`,
+                            endpoint = `${baseUrl}/lrs`,
                             sessionId = uuidv4(),
                             contextTemplate = {
                                 contextActivities: {
@@ -752,9 +745,6 @@ module.exports = {
                                     "https://w3id.org/xapi/cmi5/context/extensions/sessionid": sessionId
                                 }
                             };
-                        
-                        let launchURLBase = (process.env.PLAYER_STANDALONE_LAUNCH_URL_BASE || `${protocol}//${req.url.host}${rootPath}`);
-                        let endpoint = `${launchURLBase}/lrs`;
                         
                         // //Debug messages for troubleshooting host and path issuse - MB
                         // console.log("Base url is ", baseUrl);
@@ -833,7 +823,7 @@ module.exports = {
                             
                         }
                         catch (ex) {
-                            console.error(ex);
+                             
                             throw Boom.internal(new Error(`Failed request to set LMS.LaunchData state document: ${ex}`));
                         }
 
@@ -927,14 +917,13 @@ module.exports = {
                             session.id = sessionInsertResult[0];
                         }
                         catch (ex) {
-                            console.error(ex);
                             throw Boom.internal(new Error(`Failed to insert session: ${ex}`));
                         }
 
                         const launchUrlParams = new URLSearchParams(
                             {
                                 endpoint,
-                                fetch: `${launchURLBase}/fetch-url/${session.id}`,
+                                fetch: `${baseUrl}/fetch-url/${session.id}`,
                                 actor: JSON.stringify(actor),
                                 activityId: lmsActivityId,
                                 registration: reg.code

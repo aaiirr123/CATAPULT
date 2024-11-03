@@ -15,6 +15,7 @@
 */
 "use strict";
 
+
 const Boom = require("@hapi/boom"),
     Wreck = require("@hapi/wreck"),
     Hoek = require("@hapi/hoek"),
@@ -35,10 +36,8 @@ const Boom = require("@hapi/boom"),
     VERB_FAILED_ID = "http://adlnet.gov/expapi/verbs/failed",
 
     matchActor = (provided, expected, msg = "") => {
-
         console.log("provided ", provided);
         console.log("expected ", expected);
-        // Ignore the key for objectType being Agent
         const ignoreKey = "objectType";
         const ignoreValue = "Agent";
 
@@ -141,7 +140,7 @@ const Boom = require("@hapi/boom"),
                     if (! /(Z|\+00:?(?:00)?)$/.test(st.timestamp)) {
                         throw Helpers.buildViolatedReqId("9.7.0.0-2", st.id);
                     }
-
+                    console.log("post match actor");
                     matchActor(st.actor, registration.actor, st.id);
 
                     if (! st.context) {
@@ -736,7 +735,7 @@ module.exports = {
                             };
 
                         delete options.headers.host;
-                        // delete options.headers["content-length"];
+                        delete options.headers["content-length"];
 
                         //
                         // switch the authorization credential from the player session based value
@@ -753,39 +752,8 @@ module.exports = {
                             options.headers["x-forwarded-host"] = options.headers["x-forwarded-host"] || req.info.host;
                         }
 
-                            
-                        // The cmi5 JS stuff won't know what the configured LRS's xAPI version is
-                        // between 1.0.3 and 2.0, so replace that here if it was specified.
-                        //
-                        let configuredXAPIVersion = process.env.LRS_XAPI_VERSION;
-                        if (configuredXAPIVersion != undefined)
-                            options.headers["x-experience-api-version"] = configuredXAPIVersion;
-
-                        let lrsResourcePath = req.params.resource;
-
-                            
-                        // Concurrency check required or xAPI 2.0
-                        //
-                        if (req.method == "post" || req.method == "put") {
-
-                            let requiresConcurrency = Helpers.doesLRSResourceEnforceConcurrency(lrsResourcePath);
-                            let isMissingEtagHeader = options.headers["if-match"] == undefined;
-
-                            if (requiresConcurrency && isMissingEtagHeader) {
-
-                                let lrsFullQuery = `${req.params.resource}${req.url.search}`;
-                                let documentResponse = await Helpers.getDocumentFromLRS(lrsFullQuery);
-                                if (documentResponse.exists) {
-                                    options.headers["if-match"] = documentResponse.etag;
-                                }
-                            }
-                        }
-
-                        const res = await Wreck.request(req.method, uri, {
-                            ...options,
-                            timeout: 10000
-                        });
-                        const payload = await Wreck.read(res);
+                        const res = await Wreck.request(req.method, uri, options),
+                            payload = await Wreck.read(res);
 
                         response = h.response(payload).passThrough(true);
 
@@ -802,12 +770,10 @@ module.exports = {
                         res.destroy();
 
                         await afterLRSRequest(req, res, txn, beforeResult, session, regCourseAu, registration);
+
                         await txn.commit();
                     }
-                    catch (ex) { 
-                        
-                        // console.error(ex);
-
+                    catch (ex) {
                         await txn.rollback();
                         throw ex;
                     }

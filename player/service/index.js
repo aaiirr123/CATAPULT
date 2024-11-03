@@ -23,6 +23,8 @@ const Hapi = require("@hapi/hapi"),
     AuthJwt = require("@hapi/jwt"),
     waitPort = require("wait-port"),
     {
+        DB_HOST,
+        DB_PORT,
         LRS_ENDPOINT,
         LRS_USERNAME,
         LRS_PASSWORD,
@@ -65,8 +67,7 @@ const provision = async () => {
             }
         };
 
-    const DB_HOST = (process.env.DB_HOST || "rdbms");
-    await waitPort({host: DB_HOST, port: 3306});
+    await waitPort({host: DB_HOST, port: Number(DB_PORT)});
 
     const db = await require("./lib/db")();
 
