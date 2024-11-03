@@ -35,7 +35,24 @@ const Boom = require("@hapi/boom"),
     VERB_FAILED_ID = "http://adlnet.gov/expapi/verbs/failed",
 
     matchActor = (provided, expected, msg = "") => {
-        if (! Hoek.deepEqual(provided, expected)) {
+
+        console.log("provided ", provided);
+        console.log("expected ", expected);
+        // Ignore the key for objectType being Agent
+        const ignoreKey = "objectType";
+        const ignoreValue = "Agent";
+
+
+        const filteredObj1 = JSON.parse(JSON.stringify(provided, (key, value) => {
+            return key === ignoreKey && value === ignoreValue ? undefined : value;
+        }));
+    
+        const filteredObj2 = JSON.parse(JSON.stringify(expected, (key, value) => {
+            return key === ignoreKey && value === ignoreValue ? undefined : value;
+        }));
+
+        
+        if (!Hoek.deepEqual(filteredObj1, filteredObj2) ) {
             throw Helpers.buildViolatedReqId("8.1.3.0-3", msg);
         }
     },

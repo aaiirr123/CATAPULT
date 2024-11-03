@@ -33,10 +33,6 @@ const Hoek = require("@hapi/hoek"),
     } = process.env;
 
 module.exports = async () => {
-    // const host = HOST_FILE ? fs.readFileSync(HOST_FILE) : HOST,
-    //     user = USER_FILE ? fs.readFileSync(USER_FILE) : USER,
-    //     password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE) : PASSWORD,
-    //     database = DB_FILE ? fs.readFileSync(DB_FILE) : DB;
     const host = HOST_FILE ? fs.readFileSync(HOST_FILE) : DB_HOST,
         user = USER_FILE ? fs.readFileSync(USER_FILE) : DB_USERNAME,
         password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE) : DB_PASSWORD,

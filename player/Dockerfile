@@ -28,3 +28,9 @@ USER node
 ENTRYPOINT []
 CMD ["dumb-init", "./entrypoint.sh"]
 EXPOSE 3398/tcp
+
+COPY ./service/index.js /usr/src/app/index.js:ro
+COPY ./service/knexfile.js /usr/src/app/knexfile.js:ro
+COPY ./service/plugins /usr/src/app/plugins:ro
+COPY ./service/lib /usr/src/app/lib:ro
+COPY ./migrations /usr/src/app/migrations:ro
